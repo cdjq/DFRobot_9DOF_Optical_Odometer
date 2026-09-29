@@ -1,0 +1,34 @@
+#######################################
+# Syntax Coloring Map For DFRobot_9DOF_Optical_Odometer
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_9DofODO_I2C	KEYWORD1
+DFRobot_9DofODO_UART	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+getPAA_ID	KEYWORD2
+getTotalDisplacement	KEYWORD2
+resetTotalDisplacement	KEYWORD2
+setCalibrationScale	KEYWORD2
+setCpi	KEYWORD2
+readSqual	KEYWORD2
+setOrientation	KEYWORD2
+get6dofData	KEYWORD2
+getGeomagneticData	KEYWORD2
+getEuler	KEYWORD2
+getCompassDegree	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+DFROBOT_9DOF_PID	LITERAL1
+DFROBOT_9DOF_DEFAULT_I2C_ADDR	LITERAL1
