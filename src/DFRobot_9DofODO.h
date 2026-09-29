@@ -2,7 +2,7 @@
  * @file DFRobot_9DofODO.h
  * @brief Host library for SEN0776 Gravity 9-DOF optical odometer
  * @details Register map matches CS32 firmware and dfrobot-general-rtu@1.0 (16-bit big-endian).
- * @n Default I2C slave address 0x11; UART RTU class is reserved for future firmware support.
+ * @n Default I2C slave address 0x11; UART uses Modbus RTU unit id 0x11 (9600 8N1).
  * @copyright Copyright (c) 2026 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license The MIT License (MIT)
  * @version V1.0.0
@@ -13,6 +13,7 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <DFRobot_RTU.h>
 
 #define DFROBOT_9DOF_PID 0x0776u ///< Product ID (SEN0776)
 #define DFROBOT_9DOF_DEFAULT_I2C_ADDR 0x11u ///< Default 7-bit I2C slave address
@@ -123,8 +124,9 @@ public:
 
   /**
    * @fn getEuler
-   * @brief Read Fusion roll/pitch/yaw in degrees
-   * @n Registers 0x001B~0x0020 as float32 pairs.
+   * @brief Read Fusion roll/pitch/yaw in degrees (module silkscreen frame)
+   * @n Roll/pitch from gravity tilt: roll about silkscreen +X, pitch about silkscreen +Y.
+   * @n Yaw is silkscreen heading 0~360° (0=north along silkscreen +X) from tilt-compensated compass when mag OK.
    * @param roll roll degrees or NULL
    * @param pitch pitch degrees or NULL
    * @param yaw yaw degrees or NULL
@@ -141,6 +143,7 @@ public:
    */
   int getCompassDegree(float *compassDeg);
 
+  /** 模块拨码仅上电时在 CS32 固件内读取；主机库按接线选用 I2C/UART 类即可。 */
   void setHostModeSwitch(void) {}
   void setI2cAddressSwitch(void) {}
 
@@ -155,21 +158,46 @@ private:
   bool writeFloat32(uint16_t regHi, float value);
 };
 
-class DFRobot_9DofODO_UART {
+class DFRobot_9DofODO_UART : public DFRobot_RTU {
 public:
 #if defined(HAVE_HWSERIAL1)
-  explicit DFRobot_9DofODO_UART(HardwareSerial *serial = &Serial1, uint32_t baudRate = 9600);
+  explicit DFRobot_9DofODO_UART(HardwareSerial *serial = &Serial1,
+                                uint32_t baudRate = 9600,
+                                uint8_t unitId = DFROBOT_9DOF_DEFAULT_I2C_ADDR);
 #else
-  explicit DFRobot_9DofODO_UART(HardwareSerial *serial, uint32_t baudRate = 9600);
+  explicit DFRobot_9DofODO_UART(HardwareSerial *serial,
+                                uint32_t baudRate = 9600,
+                                uint8_t unitId = DFROBOT_9DOF_DEFAULT_I2C_ADDR);
 #endif
 
   bool begin(void);
+
+  bool getPAA_ID(uint16_t &productId);
+  int getTotalDisplacement(float *totalX_cm, float *totalY_cm);
+  int resetTotalDisplacement(void);
+  int setCalibrationScale(float scaleX, float scaleY);
+  int setCpi(uint16_t cpi);
+  int readSqual(uint8_t *squal);
+  bool setOrientation(bool swapXY, bool invertX, bool invertY);
+  int get6dofData(int16_t *accel, int16_t *gyro);
+  int getGeomagneticData(int16_t *mag);
+  int getEuler(float *roll, float *pitch, float *yaw);
+  int getCompassDegree(float *compassDeg);
+
+  /** 模块拨码仅上电时在 CS32 固件内读取；主机库按接线选用 I2C/UART 类即可。 */
   void setHostModeSwitch(void) {}
   void setI2cAddressSwitch(void) {}
 
 private:
   HardwareSerial *_serial;
   uint32_t _baud;
+  uint8_t _addr;
+  bool _ready;
+
+  bool readReg16Input(uint16_t reg, uint16_t *value);
+  bool writeReg16Holding(uint16_t reg, uint16_t value);
+  bool readFloat32Input(uint16_t regHi, float *out);
+  bool writeFloat32Holding(uint16_t regHi, float value);
 };
 
 #endif
