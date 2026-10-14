@@ -1,6 +1,16 @@
-/**
+/*!
  * @file DFRobot_9DofODO.cpp
+ * @brief Gravity 九轴光学里程计的 I2C / UART 接口实现。
+ * @details 寄存器为 16 位大端；float32 占连续两个寄存器，高字在前。
+ *          UART 的 CRC、组帧和超时由 DFRobot_RTU 完成，本文件只做产品寄存器读写。
+ * @copyright   Copyright (c) 2026 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @license     The MIT License (MIT)
+ * @author      wxzed(xiao.wu@dfrobot.com)
+ * @version     V1.0.0
+ * @date        2026-10-14
+ * @url         https://github.com/DFRobot/DFRobot_9DOF_Optical_Odometer
  */
+
 #include "DFRobot_9DofODO.h"
 
 DFRobot_9DofODO_I2C::DFRobot_9DofODO_I2C(TwoWire *wire, uint8_t i2cAddr)
