@@ -18,6 +18,31 @@
 #define DFROBOT_9DOF_PID 0x0776u ///< Product ID (SEN0776)
 #define DFROBOT_9DOF_DEFAULT_I2C_ADDR 0x11u ///< Default 7-bit I2C slave address
 
+/** BMI323 工作模式，写入 holding 0x0107。 */
+enum eSensorMode_t {
+  eSleepMode = 0,
+  eLowPowerMode = 1,
+  eNormalMode = 2,
+  eHighPerformanceMode = 3
+};
+
+/** 加速度量程，与 BMI3_ACC_RANGE_* 一致，holding 0x0108。 */
+enum eAccelRange_t {
+  eAccelRange2G = 0,
+  eAccelRange4G = 1,
+  eAccelRange8G = 2,
+  eAccelRange16G = 3
+};
+
+/** 陀螺仪量程，与 BMI3_GYR_RANGE_* 一致，holding 0x0109。 */
+enum eGyroRange_t {
+  eGyroRange125DPS = 0,
+  eGyroRange250DPS = 1,
+  eGyroRange500DPS = 2,
+  eGyroRange1000DPS = 3,
+  eGyroRange2000DPS = 4
+};
+
 class DFRobot_9DofODO_I2C {
 public:
   /**
@@ -45,6 +70,14 @@ public:
    * @return true on successful read
    */
   bool getPAA_ID(uint16_t &productId);
+
+  /**
+   * @fn getPAA_RevisionID
+   * @brief Read PAA5160 revision (input 0x0007)
+   * @param revisionId output revision byte in the low 8 bits
+   * @return true on success
+   */
+  bool getPAA_RevisionID(uint16_t &revisionId);
 
   /**
    * @fn getTotalDisplacement
@@ -76,8 +109,8 @@ public:
 
   /**
    * @fn setCpi
-   * @brief Write CPI setting 1~200 (holding 0x0105)
-   * @n Display CPI is (cpi+1)*100 in input 0x0011.
+   * @brief Write CPI gear 1~200 (holding 0x0105)
+   * @n Counts per inch = cpi × 100, mirrored in input 0x0011. setCpi(20) is 2000.
    * @param cpi counts-per-inch setting
    * @return 0 on success
    */
@@ -85,8 +118,8 @@ public:
 
   /**
    * @fn readSqual
-   * @brief Read surface quality (firmware already x4)
-   * @n Low squal on glossy or lifted sensor may cause drift.
+   * @brief Read raw SQUAL 0~255 (input 0x000E)
+   * @n Feature count = squal × 4. Low values mean weak tracking.
    * @param squal output 0~255
    * @return 0 on success
    */
@@ -95,7 +128,7 @@ public:
   /**
    * @fn setOrientation
    * @brief Configure optical axis swap/invert (holding 0x0106)
-   * @n Matches PAA5160 mounting direction on the PCB.
+   * @n Firmware writes PAA5160 Orientation 0x5B. Bit0 swap XY, bit1 invert X, bit2 invert Y.
    * @param swapXY swap X/Y deltas before integration
    * @param invertX invert X
    * @param invertY invert Y
@@ -143,6 +176,30 @@ public:
    */
   int getCompassDegree(float *compassDeg);
 
+  bool setBMI_Mode(eSensorMode_t mode);
+  bool reset_BMI(void);
+  bool setAccelRange(eAccelRange_t range);
+  bool setGyroRange(eGyroRange_t range);
+  bool setBMM_Mode(uint8_t opMode);
+  bool setBMM_PresetMode(uint8_t presetMode, uint8_t rate);
+  bool setBMM_Rate(uint8_t rate);
+  bool setBMM_MeasurementXYZ(uint8_t enX, uint8_t enY, uint8_t enZ);
+  bool getDataReadyState(void);
+  bool getBMM_Mode(uint16_t *mode);
+  bool getBMM_Rate(uint8_t *rate);
+
+  int fusionAhrsGetQuaternion(float q[4]);
+  int fusionAhrsGetGravity(float gravity[3]);
+  int fusionAhrsGetLinearAcceleration(float linearAccel[3]);
+  int fusionAhrsGetEarthAcceleration(float earthAccel[3]);
+  int fusionBiasGetOffset(float gyroBias[3]);
+
+  /**
+   * @brief 写入硬铁 µT 与 3×3 软铁（行优先），并保存到模块 Flash。
+   * @n 校准在丝印坐标系下进行，与 getGeomagneticData 一致。
+   */
+  int setMagCalibration(const float hardIron[3], const float softIron[3][3]);
+
   /** 模块拨码仅上电时在 CS32 固件内读取；主机库按接线选用 I2C/UART 类即可。 */
   void setHostModeSwitch(void) {}
   void setI2cAddressSwitch(void) {}
@@ -173,6 +230,7 @@ public:
   bool begin(void);
 
   bool getPAA_ID(uint16_t &productId);
+  bool getPAA_RevisionID(uint16_t &revisionId);
   int getTotalDisplacement(float *totalX_cm, float *totalY_cm);
   int resetTotalDisplacement(void);
   int setCalibrationScale(float scaleX, float scaleY);
@@ -183,6 +241,23 @@ public:
   int getGeomagneticData(int16_t *mag);
   int getEuler(float *roll, float *pitch, float *yaw);
   int getCompassDegree(float *compassDeg);
+  bool setBMI_Mode(eSensorMode_t mode);
+  bool reset_BMI(void);
+  bool setAccelRange(eAccelRange_t range);
+  bool setGyroRange(eGyroRange_t range);
+  bool setBMM_Mode(uint8_t opMode);
+  bool setBMM_PresetMode(uint8_t presetMode, uint8_t rate);
+  bool setBMM_Rate(uint8_t rate);
+  bool setBMM_MeasurementXYZ(uint8_t enX, uint8_t enY, uint8_t enZ);
+  bool getDataReadyState(void);
+  bool getBMM_Mode(uint16_t *mode);
+  bool getBMM_Rate(uint8_t *rate);
+  int fusionAhrsGetQuaternion(float q[4]);
+  int fusionAhrsGetGravity(float gravity[3]);
+  int fusionAhrsGetLinearAcceleration(float linearAccel[3]);
+  int fusionAhrsGetEarthAcceleration(float earthAccel[3]);
+  int fusionBiasGetOffset(float gyroBias[3]);
+  int setMagCalibration(const float hardIron[3], const float softIron[3][3]);
 
   /** 模块拨码仅上电时在 CS32 固件内读取；主机库按接线选用 I2C/UART 类即可。 */
   void setHostModeSwitch(void) {}

@@ -89,6 +89,11 @@ bool DFRobot_9DofODO_I2C::getPAA_ID(uint16_t &productId)
   return readReg16(0x0006u, &productId);
 }
 
+bool DFRobot_9DofODO_I2C::getPAA_RevisionID(uint16_t &revisionId)
+{
+  return readReg16(0x0007u, &revisionId);
+}
+
 int DFRobot_9DofODO_I2C::getTotalDisplacement(float *totalX_cm, float *totalY_cm)
 {
   if (!_ready || totalX_cm == NULL || totalY_cm == NULL) {
@@ -122,9 +127,9 @@ int DFRobot_9DofODO_I2C::setCalibrationScale(float scaleX, float scaleY)
 int DFRobot_9DofODO_I2C::setCpi(uint16_t cpi)
 {
   if (!_ready || cpi < 1u || cpi > 200u) {
-    return 0;
+    return -1;
   }
-  return writeReg16(0x0105u, cpi) ? 1 : 0;
+  return writeReg16(0x0105u, cpi) ? 0 : -1;
 }
 
 int DFRobot_9DofODO_I2C::readSqual(uint8_t *squal)
@@ -133,7 +138,7 @@ int DFRobot_9DofODO_I2C::readSqual(uint8_t *squal)
   if (squal == NULL || !readReg16(0x000Eu, &v)) {
     return -1;
   }
-  *squal = (uint8_t)(v / 4u);
+  *squal = (uint8_t)v;
   return 0;
 }
 
@@ -195,6 +200,138 @@ int DFRobot_9DofODO_I2C::getEuler(float *roll, float *pitch, float *yaw)
 int DFRobot_9DofODO_I2C::getCompassDegree(float *compassDeg)
 {
   return readFloat32(0x0021u, compassDeg) ? 0 : -1;
+}
+
+bool DFRobot_9DofODO_I2C::setBMI_Mode(eSensorMode_t mode)
+{
+  return _ready && writeReg16(0x0107u, (uint16_t)mode);
+}
+
+bool DFRobot_9DofODO_I2C::reset_BMI(void)
+{
+  return _ready && writeReg16(0x010Eu, 1u);
+}
+
+bool DFRobot_9DofODO_I2C::setAccelRange(eAccelRange_t range)
+{
+  return _ready && writeReg16(0x0108u, (uint16_t)range);
+}
+
+bool DFRobot_9DofODO_I2C::setGyroRange(eGyroRange_t range)
+{
+  return _ready && writeReg16(0x0109u, (uint16_t)range);
+}
+
+bool DFRobot_9DofODO_I2C::setBMM_Mode(uint8_t opMode)
+{
+  return _ready && writeReg16(0x010Au, opMode);
+}
+
+bool DFRobot_9DofODO_I2C::setBMM_PresetMode(uint8_t presetMode, uint8_t rate)
+{
+  if (!_ready || !writeReg16(0x010Cu, rate)) {
+    return false;
+  }
+  return writeReg16(0x010Bu, presetMode);
+}
+
+bool DFRobot_9DofODO_I2C::setBMM_Rate(uint8_t rate)
+{
+  return _ready && writeReg16(0x010Cu, rate);
+}
+
+bool DFRobot_9DofODO_I2C::setBMM_MeasurementXYZ(uint8_t enX, uint8_t enY, uint8_t enZ)
+{
+  uint16_t axes = (enX ? 1u : 0u) | (enY ? 2u : 0u) | (enZ ? 4u : 0u);
+  return _ready && writeReg16(0x010Du, axes);
+}
+
+bool DFRobot_9DofODO_I2C::getDataReadyState(void)
+{
+  uint16_t v = 0;
+  return _ready && readReg16(0x003Du, &v) && v != 0u;
+}
+
+bool DFRobot_9DofODO_I2C::getBMM_Mode(uint16_t *mode)
+{
+  return mode != NULL && _ready && readReg16(0x003Eu, mode);
+}
+
+bool DFRobot_9DofODO_I2C::getBMM_Rate(uint8_t *rate)
+{
+  uint16_t v = 0;
+  if (rate == NULL || !_ready || !readReg16(0x003Fu, &v)) {
+    return false;
+  }
+  *rate = (uint8_t)v;
+  return true;
+}
+
+int DFRobot_9DofODO_I2C::fusionAhrsGetQuaternion(float q[4])
+{
+  if (q == NULL || !readFloat32(0x0023u, &q[0]) || !readFloat32(0x0025u, &q[1]) ||
+      !readFloat32(0x0027u, &q[2]) || !readFloat32(0x0029u, &q[3])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_I2C::fusionAhrsGetGravity(float gravity[3])
+{
+  if (gravity == NULL || !readFloat32(0x002Bu, &gravity[0]) || !readFloat32(0x002Du, &gravity[1]) ||
+      !readFloat32(0x002Fu, &gravity[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_I2C::fusionAhrsGetLinearAcceleration(float linearAccel[3])
+{
+  if (linearAccel == NULL || !readFloat32(0x0031u, &linearAccel[0]) ||
+      !readFloat32(0x0033u, &linearAccel[1]) || !readFloat32(0x0035u, &linearAccel[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_I2C::fusionAhrsGetEarthAcceleration(float earthAccel[3])
+{
+  if (earthAccel == NULL || !readFloat32(0x0037u, &earthAccel[0]) ||
+      !readFloat32(0x0039u, &earthAccel[1]) || !readFloat32(0x003Bu, &earthAccel[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_I2C::fusionBiasGetOffset(float gyroBias[3])
+{
+  if (gyroBias == NULL || !readFloat32(0x0041u, &gyroBias[0]) || !readFloat32(0x0043u, &gyroBias[1]) ||
+      !readFloat32(0x0045u, &gyroBias[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_I2C::setMagCalibration(const float hardIron[3], const float softIron[3][3])
+{
+  uint8_t r;
+  uint8_t c;
+  if (!_ready || hardIron == NULL || softIron == NULL) {
+    return -1;
+  }
+  if (!writeFloat32(0x0110u, hardIron[0]) || !writeFloat32(0x0112u, hardIron[1]) ||
+      !writeFloat32(0x0114u, hardIron[2])) {
+    return -1;
+  }
+  for (r = 0; r < 3; r++) {
+    for (c = 0; c < 3; c++) {
+      uint16_t addr = (uint16_t)(0x0116u + ((uint16_t)r * 3u + c) * 2u);
+      if (!writeFloat32(addr, softIron[r][c])) {
+        return -1;
+      }
+    }
+  }
+  return writeReg16(0x0128u, 1u) ? 0 : -1;
 }
 
 DFRobot_9DofODO_UART::DFRobot_9DofODO_UART(HardwareSerial *serial,
@@ -270,6 +407,11 @@ bool DFRobot_9DofODO_UART::getPAA_ID(uint16_t &productId)
   return readReg16Input(0x0006u, &productId);
 }
 
+bool DFRobot_9DofODO_UART::getPAA_RevisionID(uint16_t &revisionId)
+{
+  return _ready && readReg16Input(0x0007u, &revisionId);
+}
+
 int DFRobot_9DofODO_UART::getTotalDisplacement(float *totalX_cm, float *totalY_cm)
 {
   if (!_ready || totalX_cm == NULL || totalY_cm == NULL) {
@@ -314,7 +456,7 @@ int DFRobot_9DofODO_UART::readSqual(uint8_t *squal)
   if (squal == NULL || !readReg16Input(0x000Eu, &v)) {
     return -1;
   }
-  *squal = (uint8_t)(v / 4u);
+  *squal = (uint8_t)v;
   return 0;
 }
 
@@ -380,4 +522,136 @@ int DFRobot_9DofODO_UART::getCompassDegree(float *compassDeg)
     return -1;
   }
   return readFloat32Input(0x0021u, compassDeg) ? 0 : -1;
+}
+
+bool DFRobot_9DofODO_UART::setBMI_Mode(eSensorMode_t mode)
+{
+  return _ready && writeReg16Holding(0x0107u, (uint16_t)mode);
+}
+
+bool DFRobot_9DofODO_UART::reset_BMI(void)
+{
+  return _ready && writeReg16Holding(0x010Eu, 1u);
+}
+
+bool DFRobot_9DofODO_UART::setAccelRange(eAccelRange_t range)
+{
+  return _ready && writeReg16Holding(0x0108u, (uint16_t)range);
+}
+
+bool DFRobot_9DofODO_UART::setGyroRange(eGyroRange_t range)
+{
+  return _ready && writeReg16Holding(0x0109u, (uint16_t)range);
+}
+
+bool DFRobot_9DofODO_UART::setBMM_Mode(uint8_t opMode)
+{
+  return _ready && writeReg16Holding(0x010Au, opMode);
+}
+
+bool DFRobot_9DofODO_UART::setBMM_PresetMode(uint8_t presetMode, uint8_t rate)
+{
+  if (!_ready || !writeReg16Holding(0x010Cu, rate)) {
+    return false;
+  }
+  return writeReg16Holding(0x010Bu, presetMode);
+}
+
+bool DFRobot_9DofODO_UART::setBMM_Rate(uint8_t rate)
+{
+  return _ready && writeReg16Holding(0x010Cu, rate);
+}
+
+bool DFRobot_9DofODO_UART::setBMM_MeasurementXYZ(uint8_t enX, uint8_t enY, uint8_t enZ)
+{
+  uint16_t axes = (enX ? 1u : 0u) | (enY ? 2u : 0u) | (enZ ? 4u : 0u);
+  return _ready && writeReg16Holding(0x010Du, axes);
+}
+
+bool DFRobot_9DofODO_UART::getDataReadyState(void)
+{
+  uint16_t v = 0;
+  return _ready && readReg16Input(0x003Du, &v) && v != 0u;
+}
+
+bool DFRobot_9DofODO_UART::getBMM_Mode(uint16_t *mode)
+{
+  return mode != NULL && _ready && readReg16Input(0x003Eu, mode);
+}
+
+bool DFRobot_9DofODO_UART::getBMM_Rate(uint8_t *rate)
+{
+  uint16_t v = 0;
+  if (rate == NULL || !_ready || !readReg16Input(0x003Fu, &v)) {
+    return false;
+  }
+  *rate = (uint8_t)v;
+  return true;
+}
+
+int DFRobot_9DofODO_UART::fusionAhrsGetQuaternion(float q[4])
+{
+  if (!_ready || q == NULL || !readFloat32Input(0x0023u, &q[0]) || !readFloat32Input(0x0025u, &q[1]) ||
+      !readFloat32Input(0x0027u, &q[2]) || !readFloat32Input(0x0029u, &q[3])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_UART::fusionAhrsGetGravity(float gravity[3])
+{
+  if (!_ready || gravity == NULL || !readFloat32Input(0x002Bu, &gravity[0]) ||
+      !readFloat32Input(0x002Du, &gravity[1]) || !readFloat32Input(0x002Fu, &gravity[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_UART::fusionAhrsGetLinearAcceleration(float linearAccel[3])
+{
+  if (!_ready || linearAccel == NULL || !readFloat32Input(0x0031u, &linearAccel[0]) ||
+      !readFloat32Input(0x0033u, &linearAccel[1]) || !readFloat32Input(0x0035u, &linearAccel[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_UART::fusionAhrsGetEarthAcceleration(float earthAccel[3])
+{
+  if (!_ready || earthAccel == NULL || !readFloat32Input(0x0037u, &earthAccel[0]) ||
+      !readFloat32Input(0x0039u, &earthAccel[1]) || !readFloat32Input(0x003Bu, &earthAccel[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_UART::fusionBiasGetOffset(float gyroBias[3])
+{
+  if (!_ready || gyroBias == NULL || !readFloat32Input(0x0041u, &gyroBias[0]) ||
+      !readFloat32Input(0x0043u, &gyroBias[1]) || !readFloat32Input(0x0045u, &gyroBias[2])) {
+    return -1;
+  }
+  return 0;
+}
+
+int DFRobot_9DofODO_UART::setMagCalibration(const float hardIron[3], const float softIron[3][3])
+{
+  uint8_t r;
+  uint8_t c;
+  if (!_ready || hardIron == NULL || softIron == NULL) {
+    return -1;
+  }
+  if (!writeFloat32Holding(0x0110u, hardIron[0]) || !writeFloat32Holding(0x0112u, hardIron[1]) ||
+      !writeFloat32Holding(0x0114u, hardIron[2])) {
+    return -1;
+  }
+  for (r = 0; r < 3; r++) {
+    for (c = 0; c < 3; c++) {
+      uint16_t addr = (uint16_t)(0x0116u + ((uint16_t)r * 3u + c) * 2u);
+      if (!writeFloat32Holding(addr, softIron[r][c])) {
+        return -1;
+      }
+    }
+  }
+  return writeReg16Holding(0x0128u, 1u) ? 0 : -1;
 }
