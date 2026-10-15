@@ -1,7 +1,9 @@
 /*!
  * @file fusionAttitude.ino
  * @brief 读取 Fusion 姿态：欧拉角、四元数、重力向量、陀螺零偏和罗盘航向。
- * @details 横滚、俯仰由重力倾角得到，平放时接近 0°。航向 0° = 丝印 +X 朝北。
+ * @details roll、pitch 由 Fusion 重力方向得到，平放时接近 0°。yaw 为 Fusion 航向，0° = 丝印 +X 朝北。
+ *          compass 是单独的罗盘航向，判断朝向以它为准。模块放平时 yaw 应接近 compass。
+ *          roll 或 pitch 超过约 55° 后 yaw 不再用地磁；接近垂直时两者会明显分开，不能用来对航向。
  *          四元数顺序为 w、x、y、z。重力单位 g。陀螺零偏单位 °/s，模块静止约 3 秒后开始估计，
  *          并在变化足够大时写入 Flash。
  * @n 接线（I2C，地址 0x11）：UNO SDA=A4/SCL=A5；Mega2560 SDA=20/SCL=21；ESP32 SDA=GPIO21/SCL=GPIO22。

@@ -188,18 +188,20 @@ public:
    * @brief 读取 Fusion 欧拉角，坐标系为模块丝印。
    * @param roll 绕丝印 +X 的横滚，单位度，不可为 NULL
    * @param pitch 绕丝印 +Y 的俯仰，单位度，不可为 NULL
-   * @param yaw 航向 0~360°，不可为 NULL
+   * @param yaw Fusion 航向 0~360°，不可为 NULL
    * @return int 0=成功；-1=空指针或通讯失败
-   * @n 横滚、俯仰由重力倾角计算，平放时接近 0°。航向 0° 表示丝印 +X 指向磁北，90° 为东，270° 为西。
+   * @n roll、pitch 由 Fusion 重力方向换到丝印，平放时接近 0°。yaw 为 Fusion 航向，0° 表示丝印 +X 指向磁北，90° 为东，270° 为西。
+   * @n 模块基本放平时地磁会参与 Fusion，yaw 应接近 getCompassDegree。roll 或 pitch 绝对值超过约 55° 后，yaw 不再用地磁，也不能再当作航向。判断朝向请用罗盘，并在放平时读取。
    */
   int getEuler(float *roll, float *pitch, float *yaw);
 
   /*!
    * @fn getCompassDegree
-   * @brief 读取倾斜补偿后的罗盘航向。
+   * @brief 读取倾斜补偿后的罗盘航向。判断模块朝向以本值为准。
    * @param compassDeg 输出 0~360°，不可为 NULL
    * @return int 0=成功；-1=空指针或通讯失败
-   * @n 与 getEuler 的 yaw 同源：0°=丝印 +X 朝北。磁力计无效时该值不会更新为罗盘角。
+   * @n 由加速度和地磁直接计算，与 Fusion 的 yaw 分开。0°=丝印 +X 朝北，90°=东，180°=南，270°=西。
+   * @n 宜在模块基本放平时读取，此时应与 yaw 接近。接近垂直时水平投影不稳，读数会明显发飘。磁力计无效时该值不更新。
    */
   int getCompassDegree(float *compassDeg);
 
@@ -494,19 +496,21 @@ public:
 
   /*!
    * @fn getEuler
-   * @brief 读取丝印系 roll/pitch/yaw，单位度。yaw 为 0~360°，0=丝印 +X 朝北。
+   * @brief 读取 Fusion 姿态角，单位度。yaw 为 0~360°，0=丝印 +X 朝北。放平时应接近罗盘；大倾角后不再是航向。
    * @param roll 横滚，不可为 NULL
    * @param pitch 俯仰，不可为 NULL
-   * @param yaw 航向，不可为 NULL
+   * @param yaw Fusion 航向，不可为 NULL
    * @return int 0=成功；-1=失败
+   * @n roll、pitch 来自 Fusion 重力。roll 或 pitch 绝对值超过约 55° 后 yaw 不再用地磁。
    */
   int getEuler(float *roll, float *pitch, float *yaw);
 
   /*!
    * @fn getCompassDegree
-   * @brief 读取罗盘航向 0~360°，与 yaw 同源。
+   * @brief 读取罗盘航向 0~360°。判断朝向以本值为准，宜在放平时读取。
    * @param compassDeg 输出，不可为 NULL
    * @return int 0=成功；-1=失败
+   * @n 由加速度和地磁直接计算，与 Fusion 的 yaw 分开。0°=丝印 +X 朝北。接近垂直时读数会发飘。
    */
   int getCompassDegree(float *compassDeg);
 
