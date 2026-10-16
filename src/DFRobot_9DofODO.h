@@ -3,7 +3,8 @@
  * @brief Gravity：九轴光学里程计（SEN0776）的 Arduino 主机库。
  * @details 模块内部由 CS32 读取 PAA5160 位移、BMI323、BMM350 并做 Fusion。主机通过 I2C 或
  *          UART（MODBUS RTU，DFRobot General RTU v1.0）访问同一套 16 位大端寄存器。
- * @n 默认 I2C 地址与 UART 从站地址均为 0x11；UART 固定 9600 8N1。本版固件不读 mode/addr 拨码。
+ * @n 模块上电读一次拨码：mode 断开=I2C、闭合=UART；addr 闭合=0x11、断开=0x12。I2C 地址与 UART 从站地址同值。
+ * @n UART 固定 9600 8N1。改拨码后需重新上电，模块上电约 1 秒后主机口才可用。
  * @copyright   Copyright (c) 2026 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
  * @author      wxzed(xiao.wu@dfrobot.com)
@@ -68,7 +69,7 @@ public:
    * @fn DFRobot_9DofODO_I2C
    * @brief 构造函数，绑定 I2C 总线与模块从机地址。
    * @param wire I2C 总线对象，默认 &Wire
-   * @param i2cAddr 模块 7 位地址，默认 0x11
+   * @param i2cAddr 模块 7 位地址，默认 0x11；addr 拨码断开时为 0x12
    * @n 本接口不打开总线，须在 setup() 中调用 begin()。
    * @return 无
    */
@@ -352,15 +353,15 @@ public:
 
   /*!
    * @fn setHostModeSwitch
-   * @brief 预留的主机口切换入口。本版为空实现。
-   * @n mode 脚与 SWD 复用，本版固件不在运行中切换 I2C/UART。主机按接线选择 I2C 或 UART 类。
+   * @brief 预留，空实现。I2C/UART 由模块上的 mode 拨码在上电时决定，不能用软件切换。
+   * @n mode 拨码断开为 I2C，闭合为 UART。主机按拨码选择 I2C 或 UART 类。
    */
   void setHostModeSwitch(void) {}
 
   /*!
    * @fn setI2cAddressSwitch
-   * @brief 预留的 I2C 地址切换入口。本版为空实现。
-   * @n addr 脚与 SWD 复用，本版固件固定地址 0x11。
+   * @brief 预留，空实现。I2C 地址由模块上的 addr 拨码在上电时决定，不能用软件切换。
+   * @n addr 拨码闭合为 0x11，断开为 0x12，构造函数的 i2cAddr 要与之一致。
    */
   void setI2cAddressSwitch(void) {}
 
@@ -386,7 +387,7 @@ public:
    * @brief 构造函数，绑定硬件串口、波特率与从站地址。
    * @param serial UART 对象。带 Serial1 的板子默认 &Serial1；没有 Serial1 的板子必须由用户传入
    * @param baudRate 波特率，模块固件固定 9600，此参数只做兼容
-   * @param unitId MODBUS 从站地址，默认 0x11
+   * @param unitId MODBUS 从站地址，默认 0x11；addr 拨码断开时为 0x12
    * @n 串口格式固定 8N1。CRC、组帧和超时由 DFRobot_RTU 完成。
    * @return 无
    */
@@ -654,13 +655,13 @@ public:
 
   /*!
    * @fn setHostModeSwitch
-   * @brief 预留。本版为空实现，不切换 I2C/UART。
+   * @brief 预留，空实现。mode 拨码闭合时模块上电进入 UART。
    */
   void setHostModeSwitch(void) {}
 
   /*!
    * @fn setI2cAddressSwitch
-   * @brief 预留。本版为空实现，地址固定 0x11。
+   * @brief 预留，空实现。从站地址由 addr 拨码决定：闭合 0x11，断开 0x12，unitId 要与之一致。
    */
   void setI2cAddressSwitch(void) {}
 

@@ -2,7 +2,8 @@
  * @file getOdoAndImuData.ino
  * @brief 主示例（I2C）：读取 Gravity 九轴光学里程计的总位移、表面质量与融合欧拉角。
  * @details setup 里 begin() 并清零累计位移；loop 里周期打印 X/Y 位移（cm）、SQUAL 与 roll/pitch/yaw（度）。
- * @n 接线（Gravity 线序：红=VCC，黑=GND，蓝=SDA，黄=SCL。本版固件固定 I2C 地址 0x11）：
+ * @n mode 拨码断开（I2C），addr 拨码闭合（0x11）；改拨码后重新上电。
+ * @n 接线（Gravity 线序：红=VCC，黑=GND，蓝=SDA，黄=SCL）：
  * @n UNO     : SDA=A4, SCL=A5, VCC=3.3V 或 5V, GND=GND
  * @n Mega2560: SDA=20, SCL=21, VCC=3.3V 或 5V, GND=GND
  * @n ESP32   : SDA=GPIO21, SCL=GPIO22, VCC=3.3V, GND=GND（Wire 默认脚）
@@ -15,7 +16,7 @@
  */
 #include "DFRobot_9DofODO.h"
 
-/* 默认 I2C 地址 0x11。本版固件不读地址拨码。 */
+/* 默认 I2C 地址 0x11；addr 拨码断开时用 DFRobot_9DofODO_I2C odo(&Wire, 0x12)。 */
 DFRobot_9DofODO_I2C odo;
 
 void setup()
